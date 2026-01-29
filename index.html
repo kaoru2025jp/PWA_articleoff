@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>契約書生成</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body { font-family: sans-serif; padding: 20px; }
+  input, button { margin: 5px 0; }
+  textarea { width: 100%; height: 260px; }
+  canvas { border: 1px solid #000; width: 100%; height: 180px; }
+</style>
+</head>
+<body>
+
+<h1>条文・契約書取得</h1>
+
+<p>番号を入力（1〜7 / 1234567）：</p>
+<input id="number" type="text">
+<button onclick="fetchArticle()">取得</button>
+
+<h3>企業名</h3>
+<input placeholder="企業名①"><br>
+<input placeholder="企業名②"><br>
+<input placeholder="企業名③"><br><br>
+
+<textarea id="output" readonly></textarea>
+
+<p>本契約書には、この文章の趣旨に基づき同意いたしました。</p>
+
+<h3>署名</h3>
+<canvas id="sign"></canvas><br>
+<button onclick="clearSign()">署名クリア</button>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/【GASのデプロイID】/exec';
+
+function fetchArticle() {
+  const number = document.getElementById('number').value;
+  fetch(`${API_URL}?number=${number}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.error) {
+        alert('番号が正しくありません');
+        return;
+      }
+
+      if (data.type === 'single') {
+        document.getElementById('output').value = data.text;
+      }
+
+      if (data.type === 'contract') {
+        let text = '';
+        Object.values(data.articles).forEach(a => {
+          text += a + '\\n\\n';
+        });
+        document.getElementById('output').value = text;
+      }
+    });
+}
+
+// 署名ボード
+const canvas = document.getElementById('sign');
+const ctx = canvas.getContext('2d');
+let drawing = false;
+
+canvas.addEventListener('mousedown', () => {
+  drawing = true;
+  ctx.beginPath();
+});
+canvas.addEventListener('mouseup', () => drawing = false);
+canvas.addEventListener('mousemove', e => {
+  if (!drawing) return;
+  ctx.lineTo(e.offsetX, e.offsetY);
+  ctx.stroke();
+});
+
+function clearSign() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+</script>
+
+</body>
+</html>
